@@ -66,6 +66,15 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       audioContextRef.current.close().catch(e => console.warn("Error closing audio context", e));
     }
+    // Explicitly close the Live API session to prevent Network Errors
+    if (sessionRef.current) {
+      try {
+        sessionRef.current.close();
+      } catch (e) {
+        console.warn("Error closing session", e);
+      }
+      sessionRef.current = null;
+    }
     setIsProctoringActive(false);
   };
 
@@ -156,6 +165,9 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
             const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
             
             scriptProcessor.onaudioprocess = (e) => {
+               // Prevent sending if session is closed/null
+               if (!isProctoringActive && !sessionRef.current) return;
+
                const inputData = e.inputBuffer.getChannelData(0);
                const l = inputData.length;
                const int16 = new Int16Array(l);
@@ -176,7 +188,7 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
                         data: base64Data
                      }
                   });
-               });
+               }).catch(() => {}); // Catch connection errors
             };
             source.connect(scriptProcessor);
             scriptProcessor.connect(inputAudioContext.destination);
@@ -187,7 +199,13 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
             const videoEl = videoRef.current;
             
             if (videoEl && ctx) {
-               setInterval(async () => {
+               const intervalId = setInterval(async () => {
+                  // Check if proctoring is still active
+                  if (!sessionRef.current) {
+                      clearInterval(intervalId);
+                      return;
+                  }
+
                   if (videoEl.readyState === 4) {
                      canvas.width = videoEl.videoWidth / 4; 
                      canvas.height = videoEl.videoHeight / 4;
@@ -201,7 +219,7 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
                               data: base64
                            }
                         });
-                     });
+                     }).catch(() => {}); // Catch connection errors
                   }
                }, 1000); 
             }
@@ -214,9 +232,23 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
                 setTimeout(() => setNotification(null), 3000);
              }
           },
-          onclose: () => console.log("Proctoring Session Closed"),
-          onerror: (e) => console.error("Proctoring Error", e)
+          onclose: () => {
+              console.log("Proctoring Session Closed");
+              sessionRef.current = null;
+          },
+          onerror: (e) => {
+              console.error("Proctoring Error", e);
+              // Don't alert user intrusively for network blips, just log
+          }
         }
+      });
+
+      // Capture session reference
+      sessionPromise.then(sess => {
+          sessionRef.current = sess;
+      }).catch(e => {
+          console.error("Connection failed initially", e);
+          setNotification("Proctoring connection issue. Exam continues.");
       });
 
     } catch (e) {
@@ -395,7 +427,7 @@ export const ExamOverlay: React.FC<ExamOverlayProps> = ({ duration, subject, dif
                          <div className="flex items-center gap-3 overflow-hidden">
                             <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                             <span className="text-xs md:text-sm text-slate-200 truncate">{file.name}</span>
-                            <span className="text-[10px] text-slate-500 uppercase shrink-0">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                            <span className="text-xs text-slate-500 uppercase shrink-0">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
                          </div>
                          <button onClick={() => removeFile(idx)} className="text-slate-500 hover:text-red-400 shrink-0 ml-2">
                             <X className="w-4 h-4" />
