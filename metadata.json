@@ -1,0 +1,8 @@
+{
+  "name": "ExamGen India",
+  "description": "AI-powered sample question paper generator for CBSE and ICSE Boards (Class 10 & 12). Generates exam-ready papers with marking schemes based on the latest syllabus.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
