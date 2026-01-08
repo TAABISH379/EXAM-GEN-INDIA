@@ -492,35 +492,12 @@ export const App: React.FC = () => {
                    
                    {/* Toolbar */}
                    <div className="sticky top-4 z-40 mb-8 p-1.5 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/40 flex flex-wrap items-center justify-between gap-4 print:hidden">
-                     
-                     {/* View Switcher */}
-                     <div className={`flex p-1 rounded-xl transition-all ${(!isExamMode || isPracticeMode) ? 'bg-slate-100/50' : 'bg-transparent'}`}>
-                       <button 
-                          onClick={() => setViewMode('paper')} 
-                          disabled={isExamMode && !isPracticeMode} 
-                          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-                             viewMode === 'paper' 
-                             ? 'bg-white shadow-sm text-slate-900' 
-                             : 'text-slate-500 hover:text-slate-700'
-                          } ${isExamMode && !isPracticeMode ? '!bg-transparent !shadow-none !text-slate-900 cursor-default pl-0' : ''}`}
-                       >
-                          Question Paper
-                       </button>
-
+                     <div className="flex bg-slate-100/50 p-1 rounded-xl">
+                       <button onClick={() => setViewMode('paper')} disabled={isExamMode && !isPracticeMode} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${viewMode === 'paper' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>Question Paper</button>
                        {(!isExamMode || isPracticeMode) && (
-                          <button 
-                             onClick={() => setViewMode('marking')} 
-                             className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-                                viewMode === 'marking' 
-                                ? 'bg-emerald-50 text-emerald-700 shadow-sm' 
-                                : 'text-slate-500 hover:text-slate-700'
-                             }`}
-                          >
-                             Answer Key
-                          </button>
+                          <button onClick={() => setViewMode('marking')} disabled={isExamMode && !isPracticeMode} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${viewMode === 'marking' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Answer Key</button>
                        )}
                      </div>
-
                      <div className="flex items-center gap-2">
                         {isExamMode && !isPracticeMode ? (
                            <div className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-bold uppercase shadow-lg flex items-center gap-2 animate-pulse">
